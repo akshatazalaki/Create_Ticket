@@ -14,9 +14,65 @@
 
     <webopt:BundleReference runat="server" Path="~/Content/css" />
     <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <style>
+        .modalBackground {
+            background-color: rgba(0, 0, 0, 0.5);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 80%;
+            height: 100%;
+            z-index: 10000;
+        }
+
+        .modelPopup {
+            background-color: #ddd;
+            border-width: 3px;
+            border-style: solid;
+            border-color: black;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            width: 90%;
+            height: auto;
+            max-height: 99%;
+            border-radius: 25px;
+    </style>
 
 </head>
 <body>
+   <%--   <script type="text/javascript">
+          var sessionTimeout = '<%= hfPopupVisible.Value %>';
+
+          function showPopup() {
+              document.getElementById('modalBackground').style.display = 'block';
+              document.getElementById('panelPopUpId').style.display = 'block';
+          }
+
+          function hidePopup() {
+              document.getElementById('modalBackground').style.display = 'none';
+              document.getElementById('panelPopUpId').style.display = 'none';
+          }
+
+          function preventRefresh(e) {
+              e.preventDefault();
+              e.returnValue = '';
+              alert("Please choose an option from the popup.");
+              return false;
+          }
+
+          function handleSessionTimeout() {
+              if (sessionTimeout === 'true') {
+                  showPopup();
+                  window.addEventListener('beforeunload', preventRefresh);
+              } else {
+                  window.removeEventListener('beforeunload', preventRefresh);
+              }
+          }
+
+          window.onload = function () {
+              handleSessionTimeout();
+          };
+</script>--%>
     <form runat="server">
         <asp:ScriptManager runat="server">
             <Scripts>
@@ -63,9 +119,36 @@
                 <p>&copy; <%: DateTime.Now.Year %> - My ASP.NET Application</p>
             </footer>--%>
         </div>
+       <%-- <asp:Timer ID="Timer1" runat="server" Interval="15000" OnTick="Timer1_Tick"></asp:Timer>
+        <ajaxToolkit:ModalPopupExtender ID="popupDelete" runat="server" BackgroundCssClass="modalBackground" PopupControlID="panelPopUpId" CancelControlID="cancelpopup" TargetControlID="linkButton"></ajaxToolkit:ModalPopupExtender>
+        <asp:Panel ID="panelPopUpId" runat="server" CssClass="modelPopup">
+            <h1>Do you want to StayLoged In</h1>
+
+            <asp:Button ID="cancelpopup" runat="server" Text="Yes" OnClick="btnLogout_Click" />
+            <asp:Button ID="yespopup" runat="server" Text="No" OnClick="btnStayLoggedIn_Click" />
+        </asp:Panel>
+
+        <asp:LinkButton ID="linkButton" runat="server" Style="display: none;" />
+        <asp:HiddenField ID="hfPopupVisible" runat="server" />
+        <asp:HiddenField ID="hfUniqueSessionId" runat="server" />--%>
+
+      <%--  <script type="text/javascript">
+            document.addEventListener("DOMContentLoaded", function () {
+                var hfPopupVisible = document.getElementById('<%= hfPopupVisible.ClientID %>');
+                if (hfPopupVisible.value === "true") {
+                    var popupExtender = $find('<%= popupDelete.ClientID %>');
+                    if (popupExtender) {
+                        popupExtender.show();
+                    }
+                }
+
+                        });
+        </script>--%>
     </form>
     <asp:PlaceHolder runat="server">
         <%: Scripts.Render("~/Scripts/bootstrap.js") %>
     </asp:PlaceHolder>
+
+
 </body>
 </html>

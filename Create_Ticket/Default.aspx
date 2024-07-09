@@ -1,4 +1,5 @@
-﻿<%@ Page Title="Home Page" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Default.aspx.cs" Inherits="Create_Ticket._Default" %>
+﻿<%@ Page Title="Home Page" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Default.aspx.cs" Inherits="Create_Ticket._Default" Async="true"%>
+
 
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
     <style>
@@ -19,8 +20,8 @@
             color: #333;
         }
     </style>
-    <main>
-       
+    <main>      
+        <asp:HiddenField ID="hiddenCSRFToken" runat="server" />
         <asp:Panel ID="PanelTicket" runat="server">
             <div style="display: flex;">
                 <div>
@@ -53,8 +54,10 @@
             </div>
         </asp:Panel>
 
+          <!-- Hidden field to store anti-forgery token -->
+      <asp:HiddenField ID="hfAntiForgeryToken" runat="server" />
 
-        <div class="button-margin">
+        <div class="button-margin"> 
             <asp:Panel ID="PanelCreate" runat="server" Visible="true">
                 <asp:Button ID="BtnCreate" runat="server" Text="Create" OnClick="BtnCreate_Click" Margin-Right="10px" />
             </asp:Panel>
@@ -70,7 +73,7 @@
 
         <asp:Panel ID="PanelGrid" runat="server" Visible="true">
             <div class="gridview-container" style="display: flex; justify-content: center; margin-top: 8px">
-                <asp:GridView ID="Grv" runat="server" AutoGenerateColumns="false" OnPageIndexChanging="Grv_PageIndexChanging" OnRowCommand="Grv_RowCommand" HeaderStyle-BackColor="DarkGray" BackColor="gainsboro" BorderColor="#92a8d1" Width="1200px" fontname="Verdana" AlternatingRowStyle-BackColor="#f2f2f2" AllowPaging="True" GridLines="Both">
+                <asp:GridView ID="Grv" runat="server" AutoGenerateColumns="false" OnPageIndexChanging="Grv_PageIndexChanging" OnRowCommand="Grv_RowCommand" HeaderStyle-BackColor="DarkGray" BackColor="gainsboro" BorderColor="#92a8d1" Width="1200px" fontname="Verdana"  AlternatingRowStyle-BackColor="#f2f2f2"  GridLines="Both" ><%--AllowPaging="True"--%>
                 </asp:GridView>
                 <asp:LinkButton ID="linkButton" runat="server" />
             </div>

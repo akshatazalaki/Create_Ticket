@@ -89,7 +89,6 @@
     <div>
         <form id="form1" runat="server">
             <center>
-
                 <div>
                     <h1>Login</h1>
                     <table>
@@ -97,7 +96,7 @@
                             <td>
                                 <asp:Label ID="LblUserName" runat="server" Text="UserName"></asp:Label></td>
                             <td>
-                                <asp:TextBox ID="TxtUserName" runat="server"></asp:TextBox>
+                                <asp:TextBox ID="TxtUserName" runat="server" AutoComplete="On"></asp:TextBox>
                             </td>
                         </tr>
                         <tr>
@@ -105,7 +104,7 @@
                                 <asp:Label ID="LblPassword" runat="server" Text="Password"></asp:Label>
                             </td>
                             <td>
-                                <asp:TextBox ID="TxtPassword" TextMode="Password" runat="server"></asp:TextBox>
+                                <asp:TextBox ID="TxtPassword" TextMode="Password" AutoComplete="On" runat="server"></asp:TextBox>
                             </td>
                         </tr>
                         <tr>

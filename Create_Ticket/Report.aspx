@@ -48,7 +48,6 @@
             border: 0px;
         }
 
-
         /* Custom styling for dropdowns */
         .custom-dropdown {
             width: 180px;
@@ -83,33 +82,28 @@
             <asp:Button ID="btnBack" runat="server" Text="Back" OnClick="btnBack_Click" Style="margin-left: auto" Width="100px" />
         </div>
 
-
         <div class="card-container-MDash">
             <div>
-
                 <h6>
                     <asp:Label ID="LabelReport" runat="server" Text="Select Report Type"></asp:Label></h6>
                 <asp:DropDownList ID="ddlReport" runat="server" AutoPostBack="true" OnSelectedIndexChanged="ddlReport_SelectedIndexChanged" Width="180px" CssClass="custom-dropdown"></asp:DropDownList>
-
             </div>
             <div style="display: flex">
                 <div id="DateSelection" runat="server" visible="true">
                     <br />
                     <asp:Label ID="LabelFromDate" runat="server" Text="From Date"></asp:Label>
                     <asp:TextBox ID="TxtFromDate" runat="server" Width="180px" PlaceHolder="YYYY/MM/DD" Style="background-color: #f0f0f0; border: 1px solid #ccc;" autocomplete="off" onkeydown="return false;" />
-                    <ajaxtoolkit:calendarextender id="FromDate" runat="server"
-                        targetcontrolid="TxtFromDate"
-                        format="yyyy/MM/dd"
-                        popupbuttonid="EntryDateImage">
-                    </ajaxtoolkit:calendarextender>
+                    <ajaxToolkit:CalendarExtender ID="FromDate" runat="server"
+                        TargetControlID="TxtFromDate"
+                        Format="yyyy/MM/dd"
+                        PopupButtonID="EntryDateImage"></ajaxToolkit:CalendarExtender>
 
                     <asp:Label ID="LabelToDate" runat="server" Text="To Date" Visible="true"></asp:Label>
                     <asp:TextBox ID="TxtToDate" runat="server" Width="180px" PlaceHolder="YYYY/MM/DD" Style="background-color: #f0f0f0; border: 1px solid #ccc;" autocomplete="off" onkeydown="return false;" />
-                    <ajaxtoolkit:calendarextender id="ToDate" runat="server"
-                        targetcontrolid="TxtToDate"
-                        format="yyyy/MM/dd"
-                        popupbuttonid="EntryDateImage">
-                    </ajaxtoolkit:calendarextender>
+                    <ajaxToolkit:CalendarExtender ID="ToDate" runat="server"
+                        TargetControlID="TxtToDate"
+                        Format="yyyy/MM/dd"
+                        PopupButtonID="EntryDateImage"></ajaxToolkit:CalendarExtender>
                 </div>
 
                 <div id="StatusSelection" runat="server" visible="false">
@@ -118,7 +112,7 @@
                     <div id="divstat" runat="server">
                         <asp:DropDownList ID="ddlStatus" runat="server" CssClass="custom-dropdown" AutoPostBack="true" OnSelectedIndexChanged="ddlStatus_SelectedIndexChanged" Width="180px"></asp:DropDownList>
                     </div>
-                </div>
+                </div>  
                 <div id="PrioritySelection" runat="server" visible="false">
                     <br />
                     <asp:Label ID="LabelPriority" runat="server" Text="Priority"></asp:Label>
@@ -127,13 +121,47 @@
             </div>
             <br />
             <asp:Button ID="btnFilter" runat="server" Text="View" Width="100px" OnClick="btnFilter_Click" CssClass="btn btn-primary" />
-            <asp:ImageButton ID="ImageExcel" runat="server" ImageUrl="Assest/icons8-excel-50.png" OnClick="ImageExcel_Click" Visible="false"/>
+            <asp:ImageButton ID="ImageExcel" runat="server" ImageUrl="Assest/icons8-excel-50.png" OnClick="ImageExcel_Click" Visible="false" />
             <asp:ImageButton ID="ImagePdf" runat="server" ImageUrl="Assest/icon-354355_640.png" Width="50px" Height="50px" OnClick="ImagePdf_Click" Visible="false" />
             <asp:Button ID="btnReport" runat="server" Text="Report Download" Width="100px" CssClass="btn btn-primary" OnClick="btnReport_Click" Visible="false" />
 
         </div>
     </center>
     <div class="gridview-container" style="display: flex; justify-content: center; margin-top: 8px">
-        <asp:GridView ID="GridViewReport" runat="server" Visible="true" HeaderStyle-BackColor="DarkGray" BackColor="gainsboro" BorderColor="#92a8d1" Width="1200px" fontname="Verdana" AlternatingRowStyle-BackColor="#f2f2f2" AllowPaging="True" GridLines="Both"></asp:GridView>
+        <asp:GridView ID="GridViewReport" runat="server" Visible="true" HeaderStyle-BackColor="DarkGray" 
+            BackColor="gainsboro" BorderColor="#92a8d1" Width="1200px" fontname="Verdana" AlternatingRowStyle-BackColor="#f2f2f2" GridLines="None" 
+            AutoGenerateColumns="false" OnRowDataBound="GridViewReport_RowDataBound" AllowPaging="True" pageSize="10" 
+            onpageIndexChanging="GridViewReport_PageIndexChanging">  
+        </asp:GridView>
     </div>
+    <div style="display: flex; justify-content: center; margin-top: 8px">
+        <asp:Button ID="btnGetSelectedIDs" runat="server" Text="Approve" OnClick="btnGetSelectedIDs_Click" Visible="false" />
+        <asp:Label ID="SelectedIdsLabel" runat="server" Text=""></asp:Label>
+    </div>
+  
+    <script type="text/javascript">
+        function SelectAllCheckboxes(cbHeader) {
+            var grid = document.getElementById('<%= GridViewReport.ClientID %>');
+            var inputs = grid.getElementsByTagName('input');
+            for (var i = 0; i < inputs.length; i++) {
+                if (inputs[i].type == 'checkbox' && inputs[i].id != cbHeader.id) {
+                    inputs[i].checked = cbHeader.checked;
+                }
+            }
+        }
+    </script>
+
+
+   
+
 </asp:Content>
+<%--  <Columns>
+       <asp:TemplateField>
+           <HeaderTemplate>
+               <asp:CheckBox ID="headerCheckBox" runat="server" AutoPostBack="true" Text="Select All" OnCheckedChanged="headerCheckBox_CheckedChanged" />
+           </HeaderTemplate>
+           <ItemTemplate>
+               <asp:CheckBox ID="rowCheckBox" runat="server" OnCheckedChanged="rowCheckBox_CheckedChanged1"/>
+           </ItemTemplate>
+       </asp:TemplateField>
+   </Columns>--%>

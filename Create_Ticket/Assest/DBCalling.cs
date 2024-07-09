@@ -87,7 +87,7 @@ namespace Create_Ticket.Assest
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -193,7 +193,7 @@ namespace Create_Ticket.Assest
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);
             }
         }
 

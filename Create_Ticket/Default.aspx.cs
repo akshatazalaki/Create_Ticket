@@ -1,11 +1,20 @@
 ﻿using Create_Ticket.Assest;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net;
+using System.Security.Policy;
+using System.Text;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Net.Http;
+using Newtonsoft.Json;
+using System.Web.Helpers;
+
 
 namespace Create_Ticket
 {
@@ -14,22 +23,33 @@ namespace Create_Ticket
         DBCalling Db = new DBCalling();
         protected void Page_Load(object sender, EventArgs e)
         {
-            string username = Session["username"] as string;
+            //string username = Session["username"] as string;
+            string username = Cache["username"] as string;
             if (!IsPostBack)
             {
+                
+                string csrfToken = Guid.NewGuid().ToString();
+                Session["CSRFToken"] = csrfToken;
+                hiddenCSRFToken.Value = csrfToken;
+                // CheckSessionTimeout();
+                ValidateBrowserFingerprint();
                 TaskNameDropDown();
                 UserNameDropDown();
                 PriorityDropDown();
                 StatusDropDown();
                 GetDetails();
+                
 
             }
-            if (Session["username"] == null)
+            if (Cache["username"] == null)
             {
-                Response.Redirect("~/Login.aspx");
+                Response.Redirect("~/Login.aspx",false);
+                return;
             }
             int id = Db.getUserRoleId("getUserCredentialId", username);
-            if (id != 1)
+            HttpCookie usrnm = Request.Cookies["username"];
+            //usrnm.Values.Equals("Admin")
+            if (id!=1)
             {
                 PanelTicket.Visible = false;
                 panelUpdate.Visible = false;
@@ -39,12 +59,38 @@ namespace Create_Ticket
 
             }
         }
+        private void CheckSessionTimeout()
+        {
+            if (Cache["IsAuthenticated"] != null && (bool)Cache["IsAuthenticated"])
+            {
+                DateTime lastAccessed = (DateTime)Cache["LastAccessed"];
+                TimeSpan timeSinceLastAccess = DateTime.Now - lastAccessed;
 
+                // Check if more than 1 minute has passed since last access
+                if (timeSinceLastAccess.TotalMinutes > 1) // Adjust timeout as needed
+                {
+                    // Redirect to session timeout prompt page
+                    Response.Redirect("~/StayLoggedIn.aspx");
+                }
+                else
+                {
+                    // Update last accessed time
+                    Cache["LastAccessed"] = DateTime.Now;
+                }
+            }
+            else
+            {
+                // Session not authenticated, redirect to login page
+                Response.Redirect("~/Login.aspx",false);
+            }
+        }
         private void StatusDropDown()
         {
             try
             {
-                string username = Session["username"] as string;
+                // string username = Session["username"] as string;
+                string username = Cache["username"] as string;
+
                 DataTable dt = Db.GetDataStatus("sp_getStatus", username, true);
                 ddlStatus.DataSource = dt;
                 ddlStatus.DataTextField = "Status_name";
@@ -54,7 +100,7 @@ namespace Create_Ticket
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);  
             }
 
 
@@ -74,7 +120,7 @@ namespace Create_Ticket
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -92,7 +138,7 @@ namespace Create_Ticket
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -110,7 +156,7 @@ namespace Create_Ticket
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -138,18 +184,23 @@ namespace Create_Ticket
 
             }
             catch (Exception ex)
-            { }
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
-        private void GetDetails()
+        private async void GetDetails()
         {
             //throw new NotImplementedException();
             try
             {
-                string username = Session["username"] as string;
-                DataTable dt = new DataTable();
+                //string username = Session["username"] as string;
+              string username = Cache["username"] as string;   
                 int id = Db.getUserRoleId("getUserCredentialId", username);
-                dt = Db.GetDataDetails("sp_showDetails", id, username, true);
+              //  DataTable dt = new DataTable();
+               DataTable dt = await GetTicketFromApiAsync(id,username);
+                
+               // dt = Db.GetDataDetails("sp_showDetails", id, username, true);
                 ViewState["pageindex"] = dt;
                 if (dt != null && dt.Rows.Count > 0)
                 {
@@ -159,80 +210,208 @@ namespace Create_Ticket
                     }
                     Grv.DataSource = dt;
                     Grv.DataBind();
-                    // ViewState["dt1"] = dt;
+                    //ViewState["dt1"] = dt;
                 }
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);
             }
         }
 
-       
-     
 
-        protected void BtnCreate_Click(object sender, EventArgs e)
+        private async Task<DataTable> GetTicketFromApiAsync(int id, string username)
         {
             try
             {
+                using (WebClient client = new WebClient())
+                {
+                    // string url = $"https://localhost:7155/api/createTicketApi/GetEmployeeTicketDetails/{id},{username}";
+                    string url = $"https://localhost:7212/WeatherForecast/{id},{username}";
+                    string response = await client.DownloadStringTaskAsync(new Uri(url));
+                    return JsonConvert.DeserializeObject<DataTable>(response);
+                }
+            }
+            catch (WebException e)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine($"Request error: {e.Message}");
+                return null;
+            }
+            catch (Exception e)
+            {
+                // Handle any other exceptions
+                Console.WriteLine($"Unexpected error: {e.Message}");
+                return null;
+            }
+        }
 
-                Assest.Parameters _cparam = new Assest.Parameters();
-                _cparam.TaskName = ddlTask.Text;
+        private async Task<bool> CreateTicketAsync(AddTicket ticket)
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    // Construct the URL with parameters
+                    var url = $"https://localhost:7155/api/createTicketApi/createTicketEmployee/" +
+                              $"{ticket.TaskName}," +
+                              $"{ticket.AssignedBy}," +
+                              $"{ticket.AssignedTo}," +
+                              $"{ticket.StatusDate:yyyy-MM-ddTHH:mm:ss}," +
+                              $"{ticket.AssignedDate:yyyy-MM-ddTHH:mm:ss}," +
+                              $"{ticket.StatusName}," +
+                              $"{ticket.Priority}";
+
+                    // Send the POST request
+                    HttpResponseMessage response = await client.PostAsync(url, null);
+                    response.EnsureSuccessStatusCode(); // Throw on error code
+
+                    return true; // Ticket created successfully
+                }
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine($"HTTP request error: {e.Message}");
+                return false; // Failed to create ticket
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error: {ex.Message}");
+                return false; // Failed to create ticket
+            }
+        }
+
+        private async Task<bool> UpdateTicketAsync(AddTicket ticket)
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    var url = $"https://localhost:7155/api/createTicketApi/updateTicketEmployee/" +
+                              $"{ticket.Id},"+
+                              $"{ticket.StatusName},"+
+                              $"{ticket.StatusDate:yyyy-MM-ddTHH:mm:ss}";
+
+                    // Send the PUT request
+                    HttpResponseMessage response = await client.PutAsync(url, null);
+                    response.EnsureSuccessStatusCode(); // Throw on error code
+
+                    return true; // Ticket updated successfully
+                }
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine($"HTTP request error: {e.Message}");
+                return false; // Failed to update ticket
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error: {ex.Message}");
+                return false; // Failed to update ticket
+            }
+        }
+
+        protected async void BtnCreate_Click(object sender, EventArgs e)
+        {
+            try
+            {
+               
+                Assest.AddTicket _cparam = new Assest.AddTicket();
+                _cparam.TaskName = Convert.ToInt32(ddlTask.Text); 
                 _cparam.AssignedBy = 1;
                 _cparam.AssignedTo = Convert.ToInt32(ddlName.Text);
 
-                _cparam.StatusDate = Convert.ToDateTime(DateTime.Today.Date.ToString("yyyy/MM/dd"));
+                //_cparam.StatusDate = Convert.ToDateTime(DateTime.Today.Date.ToString("yyyy/MM/dd"));
+                _cparam.StatusDate = DateTime.Now;
                 _cparam.StatusName = Convert.ToInt32(ddlStatus.Text);
                 _cparam.Priority = Convert.ToInt32(ddlPriority.Text);
 
 
                 if (BtnCreate.Text == "Create")
                 {
-                    _cparam.AssignedDate = Convert.ToDateTime(DateTime.Today.Date.ToString("yyyy/MM/dd"));
-                    Db.AddEmployeeDetails(_cparam);
+                    string sessionToken = Session["CSRFToken"] as string;
+                    string formToken = hiddenCSRFToken.Value;
+
+                    if (sessionToken == formToken)
+                    {   
+                        //_cparam.AssignedDate = Convert.ToDateTime(DateTime.Today.Date.ToString("yyyy/MM/dd"));
+                        _cparam.AssignedDate = DateTime.Now;
+                        //Db.AddEmployeeDetails(_cparam);
+                        await CreateTicketAsync(_cparam);
+                    }
+
                 }
+                //else
+                //{
+
+                //    panelUpdate.Visible = true;
+
+                //    int TaskId = Convert.ToInt32(ViewState["TaskId"]);
+
+
+                //    _cparam.Id = Convert.ToInt32(ViewState["TaskId"]);
+                //    //_cparam.StatusName = Convert.ToInt32(ViewState["status"]);
+                //    _cparam.StatusName = Convert.ToInt32(ddlStatus.SelectedValue);
+                //    //_cparam.StatusDate = Convert.ToDateTime(DateTime.Today.Date.ToString("yyyy/MM/dd"));
+                //    _cparam.StatusDate = DateTime.Now;
+                //    await UpdateTicketAsync(_cparam);
+
+                //    // Db.UpdatedDetails(_cparam);
+
+                //    ScriptManager.RegisterStartupScript(this, GetType(), "StatusUpdatedPopup", "console.log('Status updated successfully'); alert('Status updated successfully');", true);
+                //    BtnCreate.Text = "Create";
+                //    // pnlupdateStatus.Visible = false;
+                //    panelUpdate.Visible = false;
+                //    //PanelBtn.Visible = false;
+
+
+                //}
+
+
+
                 else
                 {
-
                     panelUpdate.Visible = true;
 
-                    int TaskId = Convert.ToInt32(ViewState["TaskId"]);
-
-
                     _cparam.Id = Convert.ToInt32(ViewState["TaskId"]);
-                    //_cparam.StatusName = Convert.ToInt32(ViewState["status"]);
                     _cparam.StatusName = Convert.ToInt32(ddlStatus.SelectedValue);
-                    _cparam.StatusDate = Convert.ToDateTime(DateTime.Today.Date.ToString("yyyy/MM/dd"));
+                    _cparam.StatusDate = DateTime.Now;
+                    await UpdateTicketAsync(_cparam);
 
-                    Db.UpdatedDetails(_cparam);
-
-                    ScriptManager.RegisterStartupScript(this, GetType(), "StatusUpdatedPopup", "console.log('Status updated successfully'); alert('Status updated successfully');", true);
+                    //ScriptManager.RegisterStartupScript(this, GetType(), "StatusUpdatedPopup", "console.log('Status updated successfully'); alert('Status updated successfully');", true);
                     BtnCreate.Text = "Create";
-                    // pnlupdateStatus.Visible = false;
                     panelUpdate.Visible = false;
-                    //PanelBtn.Visible = false;
-
-
                 }
-                //PanelGrid.Visible = true;
+
+
+
+                PanelGrid.Visible = true;
                 //PanelRegister.Visible = false;
                 //PanelDeletePopUp.Visible = false;
                 //GetFarmerDetails();
-                GetDetails();
+                //GetDetails();
+                Server.TransferRequest(Request.Url.AbsolutePath, false);
+                HttpContext.Current.ApplicationInstance.CompleteRequest();
+                return;
+
 
 
             }
-            catch (Exception ex) { }
+            catch (Exception ex) {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         protected void BtnBack_Click(object sender, EventArgs e)
         {
-            Response.Redirect("Default.aspx");
+            Response.Redirect("Default.aspx",false);
+            return;
         }
 
         protected void BtnReport_Click(object sender, EventArgs e)
         {
-            Response.Redirect("~/Report.aspx");
+            Response.Redirect("~/Report.aspx",false);
+            return;
         }
 
         protected void Grv_PageIndexChanging(object sender, GridViewPageEventArgs e)
@@ -273,7 +452,40 @@ namespace Create_Ticket
                 }
 
             }
-            catch (Exception ex) { }
+            catch (Exception ex) {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        private void ValidateBrowserFingerprint()
+        {
+            //string sessionBrowserFingerprint = Session["BrowserFingerprint"] as string;
+            string sessionBrowserFingerprint = Cache["BrowserFingerprint"] as string;
+
+            if (sessionBrowserFingerprint != null)
+            {
+                string currentBrowserFingerprint = BrowserIdentifier.GenerateBrowserFingerprint(Request);
+                string decryptedSessionFingerprint = EncryptionHelper.Decrypt(sessionBrowserFingerprint);
+
+                if (decryptedSessionFingerprint != currentBrowserFingerprint)
+                {
+                    // Browser fingerprints do not match, invalidate the session and redirect
+                    InvalidateSessionAndRedirect();
+                }
+            }   
+            else
+            {
+                // Browser fingerprint is missing in session, invalidate session and redirect
+                InvalidateSessionAndRedirect();
+            }
+        }
+
+        private void InvalidateSessionAndRedirect()
+        {
+            //Session.Abandon();
+            Response.Redirect("~/Login.aspx", false);
+            return;
+           // HttpContext.Current.ApplicationInstance.CompleteRequest();
         }
     }
 }

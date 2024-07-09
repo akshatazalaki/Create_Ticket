@@ -15,6 +15,15 @@ namespace Create_Ticket
     {
 
         /// <summary>
+        /// hiddenCSRFToken control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hiddenCSRFToken;
+
+        /// <summary>
         /// PanelTicket control.
         /// </summary>
         /// <remarks>
@@ -112,6 +121,15 @@ namespace Create_Ticket
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.DropDownList ddlStatus;
+
+        /// <summary>
+        /// hfAntiForgeryToken control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hfAntiForgeryToken;
 
         /// <summary>
         /// PanelCreate control.
